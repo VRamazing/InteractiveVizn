@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Interactive Visualization</title>
+        <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+        <script type="text/javascript" src="lib/d3.v3.js"></script>
+        <style>
+        	*{
+        		font-family: 'Roboto', sans-serif;
+        	}
+			.axis path,
+			.axis line{
+				fill: none;
+				stroke: #3949AB;
+				shape-rendering: crispEdges;
+			
+			}
+
+			.axis text{
+				font-family: sans-serif;
+				font-size: 10px;
+			}
+
+			.bar-chart,{
+				cursor:pointer;
+
+			}
+
+			.bar-chart:hover{
+				fill: #7986CB;
+				cursor:pointer;
+
+			}
+			
+			
+
+
+   		</style>
+    </head>
+    <body>
+	    <script>
+
+
+	    	var data=[
+	    				{club:'Manchester United',value:{year_2013:3165, year_2014:2810, year_2015:3100, year_2016:3317, year_2017:4583}},
+						{club:'Chelsea',value:{year_2013:901, year_2014:868, year_2015:1370, year_2016:1661, year_2017:1845}},
+						{club:'Manchester City',value:{year_2013:689, year_2014:863, year_2015:1380, year_2016:1921, year_2017:2083}},
+						{club:'Liverpool',value:{year_2013:651, year_2014:704, year_2015:982, year_2016:1548, year_2017:1492}},
+						{club:'Arsenal',value:{year_2013:1326, year_2014:1331, year_2015:1310, year_2016:2017, year_2017:1932}}
+					  ];
+
+			
+
+
+			 var margin = { top: 40, right: 0, bottom: 100, left: 23 },
+              width = 700 - margin.left - margin.right,
+              height = 550 - margin.top - margin.bottom;
+
+            var totalWorth = []
+
+            
+			
+			data.map(function(e){
+
+
+                totalWorth.push(e.value.year_2013 + e.value.year_2014 + e.value.year_2015 + e.value.year_2016 + e.value.year_2017)
+          
+				
+				e.value = [{"year" : 2013 , "value" : e.value.year_2013},
+						   {"year" : 2014, "value" : e.value.year_2014} ,
+						   {"year" : 2015, "value" : e.value.year_2015} ,
+						   {"year" : 2016, "value" : e.value.year_2016} ,
+						   {"year" : 2017, "value" : e.value.year_2017} ,
+						  ]
+			});
+           console.log(data);
+
+            //svg
+            d3.select("body")
+                .append('center')
+                .append("p")
+                .attr('style', 'font-size: 20px;font-weight: 600;text-transform: uppercase;')
+                .text("Interactive Visualization")
+
+             var svg  = d3.select("body")
+                        .append('center')
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            //bars
+            bars = svg.selectAll('rect')
+                        .data(data)
+                        .enter()           
+                        .append('rect')
+                        .attr('fill', '#29B6F6')
+                        .attr("x",95)
+                        .attr("class", "bar-chart")
+                      
+
+                        .attr("y", function(d,i){
+                            return i*40;
+                        })
+                        .attr("width",function(d){
+                        	var sum = 0
+                        	for(var i = 0; i < d.value.length;i++){
+                        		sum+= d.value[i].value
+                        	}
+                            return sum/50; //normalized
+                        })
+                        .attr("height",30)
+
+                        .on("mouseover", function(d){plotChart(d)} )
+
+                       	.on("mouseout", function(d){
+                       		d3.select(".line-chart").remove();
+                       		d3.selectAll("g.axis").remove();
+                       	})
+
+            //Amount in dollars for each club
+            amtInDollars = svg.selectAll("amountLabels")
+                        .data(totalWorth)
+                        .enter()
+                        .append("text")
+                        .text(function(d){ return "$" + d.toString();})
+                        .attr({
+                            "text-anchor" : "start",
+                            x : 100,
+                            y : function(d,i){
+                            	return i*40 + 20;
+                       		 },
+                            "fill": "white",
+                            "font-size" : "13px",
+                            "class": "amount"                  
+
+            			})
+
+                        // .on("mouseover", function(d){plotChart(d)} )
+
+                       	// .on("mouseout", function(d){
+                       	// 	d3.select(".line-chart").remove();
+                       	// 	d3.selectAll("g.axis").remove();
+                       	// }
+                       	// )
+
+            //Name of each club
+            clubLabels = svg.selectAll("clubLabels")
+                        .data(data)
+                        .enter()
+                        .append("text")
+                        .text(function(d){ return d.club})
+                        .attr({
+                            "text-anchor" : "end",
+                            x : 90,
+                            y : function(d,i){
+                            	return i*40 + 20;
+                       		 },
+                            
+                            "font-size" : "13px"
+            			})
+
+            function plotChart(d){
+
+                        	
+
+
+				            var scaleX = d3.scale.linear()
+				           					.domain([2013,2018])
+				           					.range([500,700]).nice();
+				           	var scaleY = d3.scale.linear()
+				           					.domain([5000,400])
+				           					.range([200,450]).nice();
+
+				           	var yAxis = d3.svg.axis().scale(scaleY).orient("left").ticks('4');
+				           	var xAxis = d3.svg.axis().scale(scaleX).orient("bottom").ticks('4').tickFormat(d3.format("d"))
+				         
+
+				            var lineFun = d3.svg.line()
+				            .x(function(d){ return scaleX(d.year)})
+				            .y(function(d){ return scaleY(d.value)})
+				            .interpolate("linear");
+
+
+				            var axisX = svg.append("g").call(yAxis)
+				            			.attr("class","axis")
+				            			.attr("id","axis")
+				            			.attr("transform","translate(" + 500 + ",0)");
+
+				            var axisY = svg.append("g").call(xAxis)
+				            			.attr("class","axis")
+				            			.attr("id","axis")
+				            			.attr("transform","translate(" + 2 + ",450)");
+
+				           	var lineChart = svg.append("path")
+				           				.attr({
+				           					d: lineFun(d.value),
+				           					"stroke": "#3949AB",
+				           					"stroke-width": 2, 
+				           					"fill":"none",
+				           					"class":"line-chart"        					
+				           				})
+
+                       	}
+
+                    
+          
+
+
+      
+
+          
+
+          
+        </script>
+    </body>
+</html>     
